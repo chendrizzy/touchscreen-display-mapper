@@ -209,8 +209,10 @@ struct TouchGesturesTests {
     @Test func withPinchTwoFingersSpreadingZoom() {
         var g = gestures(pinch: true)
         #expect(g.finger(at(-50, 0), 0, partner: at(50, 0)).isEmpty)
-        #expect(g.finger(at(-56, 0), 0.0625, partner: at(56, 0)) == [.move(o), .magnify(112.0 / 100 - 1, at: o, .began)])
-        #expect(g.finger(at(-70, 0), 0.125, partner: at(70, 0)) == [.magnify(140.0 / 112 - 1, at: o, .changed)])
+        // Spread 100 -> 112 -> 140 points; typed first, which older compilers need.
+        let opened: CGFloat = 112 / 100 - 1, widened: CGFloat = 140 / 112 - 1
+        #expect(g.finger(at(-56, 0), 0.0625, partner: at(56, 0)) == [.move(o), .magnify(opened, at: o, .began)])
+        #expect(g.finger(at(-70, 0), 0.125, partner: at(70, 0)) == [.magnify(widened, at: o, .changed)])
         #expect(g.allLifted(0.1875) == [.magnify(0, at: o, .ended)])
     }
 

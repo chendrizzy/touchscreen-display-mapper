@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+      - name: Install script (syntax and dry run)
+        run: |
+          /bin/bash -n scripts/install.sh
+          /bin/bash -n scripts/uninstall.sh
+          /bin/bash scripts/install.sh --dry-run --device 27c0:0859 --display 19083:13107

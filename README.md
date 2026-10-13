@@ -83,12 +83,15 @@ Then grant the two permissions the agent asks for, in **System Settings →
 Privacy & Security**:
 
 - **Input Monitoring**, to read the touch panel;
-- **Accessibility**, to click.
+- **Accessibility**, to click. macOS 27 calls it **Device Control and Data
+  Access**.
 
 Enable `touchscreen-display-mapper` in both lists. If it is not listed, click
 **+** and add `~/.touchscreen-display-mapper/bin/touchscreen-display-mapper`
 (press ⌘⇧G in the file picker to type the path). Until both are granted the
-agent exits and launchd retries it every 30 seconds.
+agent exits and launchd retries it every 30 seconds. It asks for each
+permission only once per install; if you dismissed a prompt, enable the agent
+in the list as above, or reinstall to be asked again.
 
 ### Try it without taking over
 
@@ -196,6 +199,11 @@ ad-hoc) and `TSDM_HOME` (install directory, default
 - **Long presses or slow drags get cut short.** Panels resend their state while
   a finger is down, and a gap longer than `--lift-timeout` counts as a lost
   release. Reinstall with a larger value, or `0` to turn it off.
+- **A permission prompt for the agent keeps coming back after you granted
+  access.** Versions before 2026-10-13 asked on every restart while waiting for
+  the grant, and macOS queues one prompt per request (one install stacked
+  422). `killall universalAccessAuthWarn` closes the queued prompts; it changes
+  no permission, and macOS starts the helper again when something next asks.
 - **`ignoring report id …` and no touches.** The panel sends a report the
   decoder does not understand. Please open an issue with the `list-devices`
   output and that log line.

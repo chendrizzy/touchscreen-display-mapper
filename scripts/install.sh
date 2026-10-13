@@ -145,7 +145,8 @@ warn_adhoc() {
     note "WARNING: no code-signing identity found, signing ad-hoc."
   fi
   note "  macOS will treat every reinstall as a new app: after each install, re-enable"
-  note "  $NAME under Input Monitoring and Accessibility in System Settings."
+  note "  $NAME under Input Monitoring and Accessibility (Device Control and Data"
+  note "  Access on macOS 27) in System Settings."
   note "  To avoid that, create a self-signed code-signing certificate (see README)"
   note "  and pass its name in TSDM_SIGN_IDENTITY."
 }
@@ -267,7 +268,7 @@ else
   # The agent logs its reason before every exit; exit 75 means launchd retries.
   note "not running (last exit: ${last_exit:-unknown}); its last word:"
   note "  $(tail -n 1 "$LOGDIR/stdout.log" 2>/dev/null || echo '(no log yet)')"
-  note "first install? enable $NAME under Input Monitoring$([ "$OBSERVE" -eq 1 ] || echo ' and Accessibility')"
+  note "first install? enable $NAME under Input Monitoring$([ "$OBSERVE" -eq 1 ] || echo ' and Accessibility (Device Control and Data Access on macOS 27)')"
   note "  in System Settings > Privacy & Security; launchd retries every 30 s."
 fi
 note "remove with: scripts/uninstall.sh"

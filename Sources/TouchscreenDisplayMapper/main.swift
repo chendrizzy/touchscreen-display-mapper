@@ -307,22 +307,42 @@ func listDisplays() {
 
 // MARK: - Permissions
 
+/// The Settings pane for posting events; macOS 27 renamed it.
+let accessibilityPane = "Accessibility (Device Control and Data Access on macOS 27)"
+
 /// Input Monitoring to read the panel; Accessibility (post events) to click.
 /// A grant made after asking may not be visible to the asking process, so the
-/// agent exits and lets launchd relaunch it to read the new state.
+/// agent exits and lets launchd relaunch it to read the new state. Each
+/// permission is asked for once per installed binary (see PermissionRequest).
 func permissionsReady(observe: Bool) -> Bool {
     var ready = true
     if IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) != kIOHIDAccessTypeGranted {
-        log("Input Monitoring not granted. Requesting; enable touchscreen-display-mapper in System Settings > Privacy & Security > Input Monitoring.")
-        _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        askOnce("Input Monitoring", name: "input-monitoring") { _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent) }
         ready = false
     }
     if !observe && !CGPreflightPostEventAccess() {
-        log("Accessibility not granted. Requesting; enable touchscreen-display-mapper in System Settings > Privacy & Security > Accessibility.")
-        _ = CGRequestPostEventAccess()
+        askOnce(accessibilityPane, name: "accessibility") { _ = CGRequestPostEventAccess() }
         ready = false
     }
     return ready
+}
+
+/// Asks for a permission's system prompt unless this binary already did.
+func askOnce(_ pane: String, name: String, _ request: () -> Void) {
+    let enable = "enable touchscreen-display-mapper in System Settings > Privacy & Security > \(pane)"
+    guard let binary = Bundle.main.executableURL else {
+        log("\(pane) not granted; \(enable).")
+        return
+    }
+    switch PermissionRequest(binary: binary, name: name).ask(request) {
+    case .asked:
+        log("\(pane) not granted. Asked once; \(enable).")
+    case .alreadyAsked:
+        log("\(pane) not granted, and it was already asked for once; \(enable).")
+    case let .notRecorded(error):
+        log("\(pane) not granted. Not asking: the request could not be recorded (\(error)), "
+            + "and asking on every start would stack prompts; \(enable).")
+    }
 }
 
 // MARK: - Target display
@@ -842,7 +862,7 @@ final class TouchBridge {
     private func beginTouch(from key: SourceKey) -> Bool {
         guard !touch.isActive, let bounds = display.currentBounds() else { return false }
         if !options.observe && !CGPreflightPostEventAccess() {
-            log("Accessibility is no longer granted; exiting so the panel goes back to macOS")
+            log("\(accessibilityPane) is no longer granted; exiting so the panel goes back to macOS")
             exitForRetry()
         }
         touchBounds = bounds
